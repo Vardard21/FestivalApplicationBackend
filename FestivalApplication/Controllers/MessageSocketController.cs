@@ -132,8 +132,9 @@ namespace FestivalApplication.Controllers
                                 if (response.Message.Success)
                                 {
                                     // Find all message posted in the stage in the last 24 hours (limit 100) and count their interactions.
+                                    DateTime Maxdate = DateTime.UtcNow.AddDays(-1); //Must define the max date here separately as entity framework does not allow it to be defined inside the where clause
                                     int StageID = _context.Message.Where(x => x.MessageID == responseObject.MessageID).Include(x => x.UserActivity.Stage).FirstOrDefault().UserActivity.Stage.StageID;
-                                    List<Message> messages = _context.Message.Where(x => x.UserActivity.Stage.StageID == StageID & x.Timestamp > DateTime.UtcNow.AddDays(-1)).Take(100).ToList();
+                                    List<Message> messages = _context.Message.Where(x => x.UserActivity.Stage.StageID == StageID & x.Timestamp > Maxdate).Take(100).ToList();
                                     List<int> InteractionTypes = _context.Interaction.Select(x => x.InteractionType).Distinct().ToList();
                                     List<MessageInteractionsDto> interactions = new List<MessageInteractionsDto>();
                                     foreach (Message message in messages)
@@ -318,14 +319,14 @@ namespace FestivalApplication.Controllers
             try
             {
                 //Find the corresponding user activity and message
-                UserActivity activity = _context.UserActivity.Where(x => x.User.UserID == Inputdto.UserID & x.Exit == default).Include(x => x.User).FirstOrDefault();
+                UserActivity activity = _context.UserActivity.Where(x => x.User.UserID == Inputdto.UserID && x.Exit == default).Include(x => x.User).FirstOrDefault();
                 Message message = _context.Message.Find(Inputdto.MessageID);
 
                 //Check if activity and message exist
                 if(message != null & activity != null)
                 {
                     //Find any previous interactions from the same user on the same message
-                    var InteractionGiven = _context.Interaction.Where(x => x.Message == message & x.UserActivity.User == activity.User).FirstOrDefault();
+                    var InteractionGiven = _context.Interaction.Where(x => x.Message == message && x.UserActivity.User == activity.User).FirstOrDefault();
 
                     if (InteractionGiven == null)
                     {
